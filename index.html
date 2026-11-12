@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulator PO MeSa Snackhaouse</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;padding:22px 16px 40px;
+  font-family:Arial,sans-serif;
+  background:#f8f4ed;color:#493a30
+}
+.container{max-width:480px;margin:auto}
+header{text-align:center;padding:20px 10px}
+.logo{font-family:Georgia,serif;font-size:43px;
+  color:#a47755;font-weight:bold;letter-spacing:3px}
+header h2{font-size:16px;letter-spacing:3px;margin:2px}
+header p{font-size:13px;color:#927e6c}
+.card{
+  background:#fff;border-radius:18px;padding:20px;
+  margin-bottom:16px;box-shadow:0 4px 18px #765b3010
+}
+h3{margin:0 0 15px;font-size:17px}
+label{font-size:13px;font-weight:bold}
+input{
+  width:100%;padding:13px;margin-top:8px;
+  border:1px solid #e6d9c9;border-radius:10px;
+  font-size:15px;background:#fffdf9;color:#493a30
+}
+.product{
+  display:flex;justify-content:space-between;
+  align-items:center;gap:10px;padding:14px 0;
+  border-bottom:1px solid #f0e9df
+}
+.product:last-child{border:0}
+.product strong{display:block;font-size:14px}
+.price{font-size:12px;color:#987e68;margin-top:5px}
+.qty{width:75px;text-align:center;margin:0}
+.summary{display:flex;justify-content:space-between;
+  margin:12px 0;font-size:14px}
+.total{
+  background:#f8f1e8;padding:16px;border-radius:12px;
+  margin-top:15px
+}
+.total strong{font-size:23px;color:#a47755}
+button{
+  width:100%;padding:14px;border:0;border-radius:11px;
+  font-size:14px;font-weight:bold;cursor:pointer;
+  margin-top:10px
+}
+.primary{background:#a47755;color:white}
+.secondary{background:#eee5da;color:#594333}
+.whatsapp{background:#287b55;color:white}
+.note{text-align:center;color:#9a8878;font-size:11px;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <div class="logo">MeSa</div>
+  <h2>SNACKHAOUSE</h2>
+  <p>Order Calculator • Lebih mudah pesan favoritmu</p>
+</header>
+
+<div class="card">
+  <h3>Informasi Pelanggan</h3>
+  <label>Nama pelanggan</label>
+  <input id="customer" type="text" placeholder="Masukkan nama pelanggan">
+</div>
+
+<div class="card">
+  <h3>Daftar Cookies</h3>
+  <div id="products"></div>
+</div>
+
+<div class="card">
+  <h3>Ringkasan Pesanan</h3>
+  <div class="summary">
+    <span>Total toples</span><b id="jars">0</b>
+  </div>
+  <div class="total">
+    <div class="summary">
+      <b>Total pembayaran</b>
+      <strong id="total">Rp0</strong>
+    </div>
+  </div>
+  <button class="secondary" onclick="resetOrder()">RESET PESANAN</button>
+  <button class="primary" onclick="copyOrder()">SALIN RINCIAN PO</button>
+  <button class="whatsapp" onclick="sendWA()">PESAN VIA WHATSAPP</button>
+</div>
+
+<p class="note">Terima kasih sudah memilih MeSa Snackhaouse ♡</p>
+</div>
+
+<script>
+const items=[
+  {name:"Nastar",price:60000},
+  {name:"Thumbprint",price:50000},
+  {name:"Semprit Choco",price:50000},
+  {name:"Putri Salju",price:55000},
+  {name:"Choco Mede",price:60000}
+];
+
+const rupiah=n=>"Rp"+n.toLocaleString("id-ID");
+const products=document.getElementById("products");
+
+items.forEach((item,i)=>{
+  products.innerHTML+=`
+    <div class="product">
+      <div>
+        <strong>${item.name}</strong>
+        <div class="price">${rupiah(item.price)} / toples</div>
+      </div>
+      <input class="qty" type="number" min="0" step="1"
+        value="0" id="qty${i}" oninput="calculate()">
+    </div>`;
+});
+
+function calculate(){
+  let total=0,jars=0;
+  items.forEach((item,i)=>{
+    const field=document.getElementById("qty"+i);
+    let qty=Math.max(0,Math.floor(Number(field.value)||0));
+    field.value=qty;
+    total+=qty*item.price;
+    jars+=qty;
+  });
+  document.getElementById("total").textContent=rupiah(total);
+  document.getElementById("jars").textContent=jars;
+  return {total,jars};
+}
+
+function getOrder(){
+  const name=document.getElementById("customer").value.trim()||"-";
+  const result=calculate();
+  let lines=items.map((item,i)=>{
+    const qty=Number(document.getElementById("qty"+i).value);
+    return `${item.name}: ${qty} x ${rupiah(item.price)} = ${rupiah(qty*item.price)}`;
+  });
+  return `PO MeSa Snackhaouse
+Pelanggan: ${name}
+
+${lines.join("\n")}
+
+Total toples: ${result.jars}
+TOTAL PEMBAYARAN: ${rupiah(result.total)}
+
+Terima kasih sudah memesan di MeSa Snackhaouse!`;
+}
+
+function copyOrder(){
+  const text=getOrder();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text)
+      .then(()=>alert("Rincian PO berhasil disalin!"))
+      .catch(()=>fallbackCopy(text));
+  }else fallbackCopy(text);
+}
+
+function fallbackCopy(text){
+  const area=document.createElement("textarea");
+  area.value=text;document.body.appendChild(area);
+  area.select();document.execCommand("copy");
+  area.remove();alert("Rincian PO berhasil disalin!");
+}
+
+function sendWA(){
+  const text=encodeURIComponent(getOrder());
+  window.open("https://wa.me/6287825943063?text="+text,"_blank");
+}
+
+function resetOrder(){
+  if(!confirm("Yakin ingin menghapus semua pesanan?"))return;
+  document.getElementById("customer").value="";
+  items.forEach((item,i)=>{
+    document.getElementById("qty"+i).value=0;
+  });
+  calculate();
+}
+calculate();
+</script>
+</body>
+  </html>
+  
